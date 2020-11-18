@@ -54,13 +54,31 @@ public class Action {
 
     public String generateCardNumber() {
         Random random = new Random();
-        StringBuilder stringBuilder = new StringBuilder("400000");
-        for (int i = 0; i < 10; i++) {
+        StringBuilder stringBuilder = new StringBuilder();
+        String BIN = "400000";
+        stringBuilder.append(BIN);
+        for (int i = 0; i < 9; i++) {
             stringBuilder.append(random.nextInt(9));
         }
+        int controlNumber = 0;
+        int tmp;
+        for (int i = 0; i < 15; i++) {
+            tmp = (i % 2 != 0)
+                    ? Integer.parseInt(String.valueOf(stringBuilder.charAt(i)))
+                    : Integer.parseInt(String.valueOf(stringBuilder.charAt(i))) * 2;
+            tmp = tmp > 9 ? tmp - 9 : tmp;
+            controlNumber += tmp;
+        }
+        int checksum = 0;
+        if (controlNumber % 10 != 0) {
+            while ((controlNumber + checksum) % 10 != 0) {
+                checksum++;
+            }
+        }
+        stringBuilder.append(checksum);
         return stringBuilder.toString();
     }
-
+    
     public void loginIntoAccount() {
         System.out.println("Enter your card number:");
         String cardNumber = scanner.next();
