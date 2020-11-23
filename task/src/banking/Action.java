@@ -1,5 +1,9 @@
 package banking;
 
+import org.sqlite.SQLiteDataSource;
+
+import java.sql.*;
+
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -8,17 +12,19 @@ public class Action {
     private Scanner scanner = new Scanner(System.in);
     private ArrayList<Account> accounts = new ArrayList<>();
 
-    public void menu() {
+    public void menu(Connection con) {
+        createTable(con);
         while (true) {
             printMenu();
             switch (scanner.nextInt()) {
                 case 1:
                     Account account = new Account(generateCardNumber(), generateCardPIN(), 0);
                     accounts.add(account);
+                    updateDataBase(con, account);
                     printAccountCreated(account.getCardNumber(), account.getCardPIN());
                     break;
                 case 2:
-                    loginIntoAccount();
+                    loginIntoAccount(con);
                     break;
                 case 0:
                     System.out.println("Bye!");
@@ -79,15 +85,20 @@ public class Action {
         return stringBuilder.toString();
     }
     
-    public void loginIntoAccount() {
+    public void loginIntoAccount(Connection con) {
         System.out.println("Enter your card number:");
         String cardNumber = scanner.next();
         System.out.println("Enter your PIN:");
         String cardPIN = scanner.next();
-        for (Account acc : accounts) {
-            if (acc.getCardNumber().equals(cardNumber) && acc.getCardPIN().equals(cardPIN)) {
-                accountMenu(acc);
-                return;
+        if (compareDataFromDatabase(con, cardNumber, cardPIN)) {
+            for (Account acc : accounts) {
+                if (acc.getCardNumber().equals(cardNumber) && acc.getCardPIN().equals(cardPIN)) {
+                    accountMenu(acc);
+                    return;
+                } else {
+                    Account newAcc = new Account(cardNumber, cardPIN, 0);
+                    accountMenu(newAcc);
+                }
             }
         }
         System.out.println("Wrong card number or PIN!");
@@ -110,5 +121,51 @@ public class Action {
                     System.exit(0);
             }
         }
+    }
+
+    public void createTable(Connection con) {
+        try (Statement statement = con.createStatement()) {
+                statement.execute("CREATE TABLE IF NOT EXISTS card (" +
+                                      "id INTEGER PRIMARY KEY," +
+                                      "number TEXT," +
+                                      "pin TEXT," +
+                                      "balance INTEGER DEFAULT 0 " +
+                                      ");");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateDataBase(Connection con, Account account) {
+        String sql = "INSERT INTO card(number, pin) VALUES (?,?)";
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, account.getCardNumber());
+            pstmt.setString(2, account.getCardPIN());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String extractFromDataBase(Connection con, String column, String value) {
+        String sql = "SELECT " + column + " FROM card WHERE " + column + " == ?;";
+        String result = null;
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, value);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                result = rs.getString(column);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public boolean compareDataFromDatabase(Connection con, String accountNumber, String accountPIN) {
+        String[] results = new String[2];
+        results[0] = extractFromDataBase(con, "number", accountNumber);
+        results[1] = extractFromDataBase(con, "pin", accountPIN);
+        return accountNumber.equals(results[0]) && accountPIN.equals(results[1]);
     }
 }

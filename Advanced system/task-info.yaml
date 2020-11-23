@@ -123,16 +123,19 @@ files:
                     columns.put(resultSet.getString("name").toLowerCase(), resultSet.getString("type").toUpperCase());
                 }
 
-                String[][] correctColumns = {{"id", "INTEGER"}, {"number", "TEXT"}, {"pin", "TEXT"}, {"balance", "INTEGER"}};
+                String[][] correctColumns = {
+                    {"id", "INTEGER", "INT"},
+                    {"number", "TEXT", "VARCHAR"},
+                    {"pin", "TEXT", "VARCHAR"},
+                    {"balance", "INTEGER", "INT"}};
 
                 for (String[] correctColumn : correctColumns) {
                     String errorMessage = "Can't find '" + correctColumn[0] + "' column with '" + correctColumn[1] + "' type.\n" +
                         "Your table should have columns described in " +
                         "the stage instructions.";
-
                     if (!columns.containsKey(correctColumn[0])) {
                         return CheckResult.wrong(errorMessage);
-                    } else if (!columns.get(correctColumn[0]).equals(correctColumn[1])) {
+                    } else if (!columns.get(correctColumn[0]).contains(correctColumn[1]) && !columns.get(correctColumn[0]).contains(correctColumn[2])) {
                         return CheckResult.wrong(errorMessage);
                     }
                 }
