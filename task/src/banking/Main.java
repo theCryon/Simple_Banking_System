@@ -1,7 +1,7 @@
 package banking;
 
+import org.sqlite.SQLiteDataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Main {
@@ -9,7 +9,10 @@ public class Main {
         Action logic = new Action();
         if (args[0].equals("-fileName")) {
             String url = "jdbc:sqlite:" + args[1];
-            try (Connection con = DriverManager.getConnection(url)) {
+            SQLiteDataSource dataSource = new SQLiteDataSource();
+            dataSource.setUrl(url);
+            try (Connection con = dataSource.getConnection()) {
+                con.setAutoCommit(false);
                 logic.menu(con);
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -17,24 +20,5 @@ public class Main {
         } else {
             System.out.println("No database file specified.");
         }
-
-
-
-        //go.menu();
-        //logic.dataBaseOperations(args[2]);
-
-//        try (Connection con = dataSource.getConnection()) {
-//            try (Statement statement = con.createStatement()) {
-//                try (ResultSet greatHouses = statement.executeQuery("SELECT * FROM HOUSES")) {
-//                    while (greatHouses.next()) {
-//
-//                    }
-//                }
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
     }
 }

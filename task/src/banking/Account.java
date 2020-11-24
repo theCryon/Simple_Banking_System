@@ -1,8 +1,9 @@
 package banking;
 
-public class Account {
+class Account {
     private String cardNumber;
     private String cardPIN;
+    /* TODO Change double to BigDecimal*/
     private double balance;
 
     public Account() {
